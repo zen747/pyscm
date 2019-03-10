@@ -1,0 +1,4 @@
+include LICENSE
+include README.*
+global-exclude *.pyc
+global-exclude __pycache__

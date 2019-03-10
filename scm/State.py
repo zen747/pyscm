@@ -55,10 +55,11 @@ class State(FrameMover):
         self.signal_done_ = Signal()
         self.signal_onentry_ = Signal()
         self.signal_onexit_ = Signal()
-        print(f'new {self.state_uid_}')
+        #print(f'new {self.state_uid_}')
     
     def __del__(self):
-        print(f'delete {self.state_uid_}')
+        #print(f'delete {self.state_uid_}')
+        pass
 
     def set_state_id(self, state_id):
         if self.slots_ready_:

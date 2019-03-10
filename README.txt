@@ -1,6 +1,3 @@
-# pyscm
-A python state machine framework based on statecharts (scxml).
-
 This is a python library supporting statechart (in scxml format) originated by David Harel.
 Features like hierarchical states, parallel states, and history are ready for you to command.
 You won't find another lib as easy and flexible to use as SCM.
@@ -23,7 +20,9 @@ end
 """
 
 The code is listed here:
-```
+
+3------------------begin of code-------------------------
+
 from scm import StateMachineManager
 
 
@@ -103,7 +102,7 @@ if __name__ == '__main__':
     life.test()
     StateMachineManager.instance().pumpMachEvents()
 
-```
+#-------------------end of code------------------------
 
 Simply
 1. you load the scxml from external file or from a string defined in your code.
@@ -114,5 +113,5 @@ Done.
 It's that easy!
 
 Read the tutorials at
-[English] (http://zen747.blogspot.tw/2017/07/a-scm-framework-tutorial-statechart.html)
-[Traditional Chinese] (http://zen747.blogspot.tw/2017/07/scm-framework.html)
+(English) http://zen747.blogspot.tw/2017/07/a-scm-framework-tutorial-statechart.html
+(Traditional Chinese) http://zen747.blogspot.tw/2017/07/scm-framework.html
