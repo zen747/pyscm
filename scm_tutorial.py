@@ -2,15 +2,19 @@ from scm import StateMachineManager
 
 
 client_scxml = """\
-   <scxml> 
+   <scxml non-unique='on,off'> 
        <state id='appear'> 
            <transition event='born' ontransit='say_hello' target='live'/> 
        </state> 
        <parallel id='live'> 
             <transition event='hp_zero' target='dead'/> 
             <state id='eat'> 
+                <state id='on'/>
+                <state id='off'/>
             </state> 
             <state id='move'> 
+                <state id='on'/>
+                <state id='off'/>
             </state> 
        </parallel> 
        <final id='dead'/>
@@ -21,11 +25,16 @@ class Life:
     def __init__(self):
         self.mach_ = StateMachineManager.instance().getMach('the life')
         self.mach_.set_do_exit_state_on_destroy(True)
-        self.mach_.register_state_slot("appear", self.onentry_appear, self.onexit_appear)
-        self.mach_.register_state_slot("live", self.onentry_live, self.onexit_live)
-        self.mach_.register_state_slot("eat", self.onentry_eat, self.onexit_eat)
-        self.mach_.register_state_slot("move", self.onentry_move, self.onexit_move)
-        self.mach_.register_state_slot("dead", self.onentry_dead, self.onexit_dead)
+        # Instead of register every entry/exit slot that follow this 'onentry_xxx', 'onexit_xxx' naming convetion,
+#        self.mach_.register_state_slot("appear", self.onentry_appear, self.onexit_appear)
+#        self.mach_.register_state_slot("live", self.onentry_live, self.onexit_live)
+#        self.mach_.register_state_slot("eat", self.onentry_eat, self.onexit_eat)
+#        self.mach_.register_state_slot("move", self.onentry_move, self.onexit_move)
+#        self.mach_.register_state_slot("dead", self.onentry_dead, self.onexit_dead)
+        # You can simply use StateMachine.register_handler() for brevity, this is python which is dynamic.
+        self.mach_.register_handler(self)
+#        self.mach_.register_state_slot("move.on", self.onentry_move_on, self.onexit_move_on)
+        # For other cases, use register_action_slot as usual.
         self.mach_.register_action_slot('say_hello', self.say_hello)
         self.mach_.StartEngine()
         
@@ -60,7 +69,7 @@ class Life:
     
     def onexit_move(self):
         print("stop moving")
-    
+        
     def onentry_dead(self):
         print("end")
     

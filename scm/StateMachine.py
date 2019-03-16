@@ -358,3 +358,21 @@ class StateMachine(State):
         
     def register_cond_slot(self, cond, method):
         self.setCondSlot(cond, method)
+
+    def register_handler(self, handler):
+        states = self.get_all_states()
+        for state in states:
+            s = state.replace('.', '_')
+            try:
+                self.setActionSlot('onentry_'+state, eval('handler.onentry_' + s))
+            except:
+                pass
+            try:
+                self.setActionSlot('onexit_'+state, eval('handler.onexit_' + s))
+            except:
+                pass
+        
+        
+        
+        
+        
