@@ -94,6 +94,8 @@ class StateMachine(State):
         else:
             return False
 
+    def elapsed_time_of_current_state(self):
+        return self.current_leaf_state_.total_elapsed_time_
 
     def onFrameMove(self, t):
         if not self.slots_connected_:
