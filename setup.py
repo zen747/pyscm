@@ -12,7 +12,7 @@ def readme():
 
 
 setup(name='py-scm',
-      version='1.0.0',
+      version='1.0.1',
       description='A python state machine framework based on statecharts (scxml)',
       long_description=readme(),
       author='Zen Chien',
