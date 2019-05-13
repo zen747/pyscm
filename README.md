@@ -5,23 +5,7 @@ This is a python library supporting statechart (in scxml format) originated by D
 Features like hierarchical states, parallel states, and history are ready for you to command.
 You won't find another lib as easy and flexible to use as SCM.
 
-Just take a look and run scm_tutorial.py, you should see:
-
-"""
-come to exist
-we are going to...
-
-*** Hello, World! ***
-
-start living
-start eating
-start moving
-stop eating
-stop moving
-no longer live
-end
-"""
-
+Just take a look and run scm_tutorial.py.
 The code is listed here:
 ```
 from scm import StateMachineManager
@@ -104,6 +88,23 @@ if __name__ == '__main__':
     StateMachineManager.instance().pumpMachEvents()
 
 ```
+
+The output you should see:
+
+"""
+come to exist
+we are going to...
+
+*** Hello, World! ***
+
+start living
+start eating
+start moving
+stop eating
+stop moving
+no longer live
+end
+"""
 
 Simply
 1. you load the scxml from external file or from a string defined in your code.
