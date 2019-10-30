@@ -10,7 +10,7 @@ class TransitionAttr:
         self.random_target_ = []
         self.cond_ = ''     # for later connecting slot
         self.ontransit_ = ''# for later connecting slot
-        self.in_state_ = '' # for inState check if set
+        self.in_state_ = [] # for inState check if set. You can use '|' to specify multiple states, ex. "In(state1|state2)"
         
 
 class Transition:
@@ -181,7 +181,9 @@ class State(FrameMover):
                 change = not change
             return change
         elif tran.attr_.in_state_:
-            change = self.machine_().inState(tran.attr_.in_state_)
+            change = False
+            for s in tran.attr_.in_state_:
+                change |= self.machine_().inState(s)
             if tran.attr_.not_:
                 change = not change
             return change
@@ -469,13 +471,18 @@ class State(FrameMover):
                 instate_check = cond[0:3]
                 if instate_check == "In(" or instate_check == "in(":
                     endmark = cond.find(')', 4)
-                    st = cond[3:endmark]
-                    if not self.machine_().is_unique_id(st):
-                        s = self.findState(st)
-                        if not s:
-                            raise Exception("can't find state for In() check")
-                        st = s.state_uid()
-                    transitions[i].attr_.in_state_ = st
+                    states = cond[3:endmark].split("|")
+                    for st in states:
+                        if not self.machine_().is_unique_id(st):
+                            s = self.findState(st)
+                            if not s:
+                                raise Exception("can't find state for In() check")
+                            st = s.state_uid()
+                        else:
+                            s = self.findState(st)
+                            if not s:
+                                raise Exception("can't find state for In() check")
+                        transitions[i].attr_.in_state_.append(st)
                 else:
                     s = self.machine_().GetCondSlot(cond)
                     if s:
