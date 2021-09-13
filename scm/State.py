@@ -570,6 +570,9 @@ class State(FrameMover):
             
             
     def pumpNoEvents(self):
+        if self.isLeavingState():
+            return
+        
         for tran in self.no_event_transitions_:
             if self.trig_cond(tran):
                 self.changeState(tran)
