@@ -21,7 +21,9 @@ class StateMachine(State):
         self.engine_started_ = False
         self.on_event_ = False
         self.with_history_ = False
-        self.current_leaf_state_ = None
+        self.current_active_state_ = None
+        self.current_enter_state_ = None
+        self.leaf_states_ = []
         self.frame_move_slots_ = dict()
         self.cond_slots_ = dict()
         self.action_slots_ = dict()
@@ -94,14 +96,25 @@ class StateMachine(State):
         else:
             return False
 
+    def elapsed_time_of_last_enter_state(self):
+        "elapsed time of the last entry state"
+        return self.current_enter_state_.total_elapsed_time_
+
     def elapsed_time_of_current_state(self):
-        return self.current_leaf_state_.total_elapsed_time_
+        "elapsed time of the active state, for use in frame_move."
+        return self.current_active_state_.total_elapsed_time_
+
+    def elapsed_time_of_leaf_states(self):
+        "if you use parallel, there will be more than 1 leaf states."
+        return [state.total_elapsed_time_ for state in self.leaf_states_]
 
     def onFrameMove(self, t):
         if not self.slots_connected_:
             return
-        State.onFrameMove(self, t)
         self.pumpTimedEvents()
+        while len(self.queued_events_):
+            self.pumpQueuedEvents()
+        State.onFrameMove(self, t)
         while len(self.queued_events_):
             self.pumpQueuedEvents()
 
@@ -176,7 +189,7 @@ class StateMachine(State):
     
 
     def getEnterState(self):
-        return self.current_leaf_state_
+        return self.current_enter_state_
     
     
     def prepare_slots(self):

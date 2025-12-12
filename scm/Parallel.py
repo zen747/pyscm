@@ -15,11 +15,6 @@ class Parallel(State):
         pa.clone_data(self)
         return pa
     
-    def makeSureEnterStates(self):
-        self.enterState(True)
-        for substate in self.substates_:
-            substate.makeSureEnterStates()
-
     def onEvent(self, e):
         if self.isLeavingState():
             return
@@ -63,7 +58,11 @@ class Parallel(State):
         self.active_ = True
         self.reset_time()
         
-        self.machine_().current_leaf_state_ = self
+        self.machine_().current_enter_state_ = self
+
+        if not self.substates_:
+            self.machine_().leaf_states_.append(self)
+
         self.signal_onentry_.emit()
         
         if self.parent_() and not self.parent_().inStateObj(self, False):
@@ -93,8 +92,11 @@ class Parallel(State):
         if not self.active_:
             return
         
-        for substate in self.substates_:
-            substate.exitState()
+        if len(self.substates_) == 0 and self.machine_ and self.machine_():
+            self.machine_().leaf_states_.remove(self)
+        else:
+            for substate in self.substates_:
+                substate.exitState()
             
         self.active_ = False
         
@@ -142,6 +144,7 @@ class Parallel(State):
         if not self.active_:
             return
         
+        self.machine_().current_active_state_ = self
         for slot in self.frame_move_slots_:
             slot(t)
 

@@ -203,7 +203,11 @@ class State(FrameMover):
         self.done_ = False
         self.active_ = True
         
-        self.machine_().current_leaf_state_ = self
+        self.machine_().current_enter_state_ = self
+
+        if not self.substates_:
+            self.machine_().leaf_states_.append(self)
+
         self.signal_onentry_.emit()
         
         if not self.active_: # in case state changed immediately at last signal_onentry.
@@ -221,8 +225,10 @@ class State(FrameMover):
     def exitState(self):
         if not self.active_:
             return
-        
-        if self.current_state_:
+        #print(f'exitState {self.state_uid()}, mach {self.machine_}')
+        if len(self.substates_) == 0 and self.machine_ and self.machine_():
+            self.machine_().leaf_states_.remove(self)
+        elif self.current_state_:
             self.current_state_.exitState()
             
         self.active_ = False
@@ -283,11 +289,6 @@ class State(FrameMover):
             else:
                 target = st.initial_state()
                 
-        self.machine_().transition_source_state_ = self.state_uid_
-        self.machine_().transition_target_state_ = target
-        
-        #print(f"change state from '{self.state_uid_}' to '{target}'")
-
         if not self.leaving_target_transition_:
             if self.leaving_delay_ != 0:
                 attr = TransitionAttr(transition.attr_.event_, target)
@@ -318,42 +319,49 @@ class State(FrameMover):
         if not newState:
             raise Exception("can't find transition target state!")
 
-        lcaState = self.findLCA(newState[0])
-        
-        if not lcaState:
-            raise Exception("can't find common ancestor state!")
-        
-        # make sure they are in the same parallel state?
-        if len(newState) > 1:
-            for st in newState:
-                lca = self.findLCA(st)
-                if lca is not lcaState:
-                    raise Exception("multiple targets but have no common ancestor.");
+        lcaStates = []
+        lcaState = None
+        for state in newState:
+            max_depth = 0
+            lca = None
+            for leaf_state in self.machine_().leaf_states_:
+                lca = leaf_state.findLCA(state)
+                if lca.depth_ >= max_depth:
+                    max_depth = lca.depth_
+                    lcaState = lca
+            if lcaState is None:
+                raise Exception("can't find common ancestor state.")
+            lcaStates.append(lcaState)
 
-        # exit old states
-        if len(newState) == 1 and lcaState is newState[0]:
+        if len(newState) == 1 and lcaState is newState[0]: # reentering state
             self.machine_().transition_source_state_ = lcaState.state_uid()
+            self.machine_().transition_target_state_ = lcaState.state_uid()
             lcaState.exitState()
             transition.signal_transit_.emit()
             lcaState.enterState()
             return
-        elif lcaState.current_state_:
-            self.machine_().transition_source_state_ = lcaState.current_state_.state_uid()
-            lcaState.current_state_.exitState()
-            
-        transition.signal_transit_.emit()
 
-        # enter new state
-        vps = []
-        for st in newState:
-            vps.append(st)
-            parentstate = st.parent_()
+        for uState, lcaState in zip(newState, lcaStates):
+            self.machine_().transition_target_state_ = uState.state_uid()
+            if lcaState.current_state_ is not None:
+                self.machine_().transition_source_state_ = lcaState.state_uid()
+                lcaState.current_state_.exitState()
+            else: # is a parallel state
+                for substate in lcaState.substates_:
+                    if substate.isAncestorOf(uState):
+                        self.machine_().transition_source_state_ = substate.state_uid()
+                        substate.exitState()
+                        break
+            transition.signal_transit_.emit()
+
+            # enter new state
+            vps = [uState]
+            parentstate = uState.parent_()
             while parentstate and parentstate is not lcaState:
                 vps.append(parentstate)
                 parentstate = parentstate.parent_()
-                
-        lcaState.doEnterState(vps)
-        lcaState.makeSureEnterStates()
+
+            lcaState.doEnterState(vps)
 
 
     def doEnterState(self, vps):
@@ -363,7 +371,8 @@ class State(FrameMover):
         
         vps.pop()
         self.current_state_ = state
-        self.current_state_.enterState(False)
+        enter_sub = len(vps) == 0 or vps[-1].depth_ <= self.current_state_.depth_;
+        self.current_state_.enterState(enter_sub)
         if vps:
             self.current_state_.doEnterState(vps)
         
@@ -401,6 +410,12 @@ class State(FrameMover):
         
         return None
 
+    def isAncestorOf(self, ots):
+        while ots is not None and ots.depth_ >= self.depth_:
+            if ots is self:
+                return True
+            ots = ots.parent_
+        return False
 
     def inState(self, state_id, recursive=True):
         if not self.current_state_:
@@ -422,14 +437,6 @@ class State(FrameMover):
             return self.current_state_.inStateObj(state, recursive)
         else:
             return False
-
-
-    def makeSureEnterStates(self):
-        self.enterState(True)
-        if not self.current_state_  and self.substates_:
-            self.doEnterSubState()
-        if self.current_state_:
-            self.current_state_.makeSureEnterStates()
 
 
     def prepareActionCondSlots(self):
@@ -565,6 +572,7 @@ class State(FrameMover):
         if not self.active_:
             return
         
+        self.machine_().current_active_state_ = self
         for slot in self.frame_move_slots_:
             slot(t)
             
