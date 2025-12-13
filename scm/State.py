@@ -257,7 +257,7 @@ class State(FrameMover):
 
     def findState(self, state_id, exclude=None, check_parent=True):
         for substate in self.substates_:
-            if substate.state_id() == state_id:
+            if substate.state_uid() == state_id or substate.state_id() == state_id:
                 return substate
             
         for substate in self.substates_:
